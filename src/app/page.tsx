@@ -419,6 +419,24 @@ export default function Dashboard() {
 
       {/* Mobile Layout */}
       <main className="lg:hidden flex-1 overflow-hidden pb-16">
+        {/* Mobile time filter bar */}
+        <div className="flex items-center gap-1 px-2 py-1.5 bg-elevated border-b border-border-default overflow-x-auto">
+          <span className="text-[9px] text-text-dim font-mono shrink-0">TIME:</span>
+          {['1h', '6h', '24h', '48h', '7d'].map(filter => (
+            <button
+              key={filter}
+              onClick={() => setTimeFilter(filter)}
+              className={`px-2 py-0.5 rounded text-[9px] font-mono shrink-0 transition-all ${
+                timeFilter === filter
+                  ? 'bg-accent-green/20 text-accent-green'
+                  : 'text-text-dim hover:text-text-muted'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+          <span className="text-[9px] text-text-dim font-mono ml-auto shrink-0">{filteredSignals.length}/{signals.length}</span>
+        </div>
         {mobileView === 'feed' && <SignalFeed signals={filteredSignals} loading={signalsLoading || signalsValidating} onSignalClick={handleSignalClick} />}
         {mobileView === 'map' && <div className="h-full p-2"><WorldMap signals={filteredSignals} activeLayers={activeLayers} onLayerToggle={handleLayerToggle} earthquakes={earthquakes} /></div>}
         {mobileView === 'markets' && (
