@@ -36,21 +36,8 @@ import { useLanguage } from '@/components/LanguageSelector';
 import CommandPalette from '@/components/CommandPalette';
 import BreakingNewsBanner from '@/components/BreakingNewsBanner';
 import TVMode from '@/components/TVMode';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
-import PushNotificationToggle from '@/components/PushNotificationToggle';
-import MultiStreamLayout from '@/components/MultiStreamLayout';
-import OfflineIndicator from '@/components/OfflineIndicator';
-import PWAInstallPrompt from '@/components/PWAInstallPrompt';
-import SignalBanner from '@/components/SignalBanner';
-import TimeRangeSelector from '@/components/TimeRangeSelector';
-import RegionSelector, { REGIONS } from '@/components/RegionSelector';
-import CategoryFilterBar from '@/components/CategoryFilterBar';
-import MapControls from '@/components/MapControls';
-import MapLegend from '@/components/MapLegend';
-import LiveNewsTicker from '@/components/LiveNewsTicker';
 import HelpPin from '@/components/HelpPin';
 import FullscreenToggle from '@/components/FullscreenToggle';
-import EnhancedLayerPanel from '@/components/EnhancedLayerPanel';
 import { Signal, MarketData, PredictionMarket, ThreatLevel } from '@/types';
 import { getThreatLevelFromSignals } from '@/lib/classify';
 import { ACTIVE_CONFLICTS } from '@/lib/feeds';
@@ -158,6 +145,21 @@ export default function Dashboard() {
   }, [signalsData, marketsData, predictionsData]);
 
   const signals = signalsData?.signals || [];
+  
+  // Filter signals by time range
+  const now = new Date();
+  const timeRangeMs = {
+    '1h': 60 * 60 * 1000,
+    '6h': 6 * 60 * 60 * 1000,
+    '24h': 24 * 60 * 60 * 1000,
+    '48h': 48 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+  };
+  const filteredSignals = signals.filter(s => {
+    const cutoff = timeRangeMs[timeFilter as keyof typeof timeRangeMs] || timeRangeMs['24h'];
+    return new Date(s.timestamp).getTime() > now.getTime() - cutoff;
+  });
+  
   const markets = marketsData?.markets || [];
   const predictions = predictionsData?.predictions || [];
   const earthquakes = earthquakesData?.earthquakes || [];
@@ -335,7 +337,7 @@ export default function Dashboard() {
       <CommandPalette
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
-        signals={signals.map(s => ({ title: s.title, country: undefined, severity: s.severity }))}
+        signals={filteredSignals.map(s => ({ title: s.title, country: undefined, severity: s.severity }))}
         onNavigate={(view) => { if (view === 'warroom') setViewMode('warroom'); else setViewMode('dashboard'); }}
         onToggleLayer={handleLayerToggle}
       />
@@ -344,7 +346,7 @@ export default function Dashboard() {
       <TVMode isActive={tvMode} onExit={() => setTvMode(false)} />
 
       {/* Breaking News Banner */}
-      <BreakingNewsBanner signals={signals} />
+      <BreakingNewsBanner signals={filteredSignals} />
 
       {/* Mode Toggle - Desktop */}
       <div className="hidden lg:flex bg-void border-b border-border-default px-4 py-1.5 items-center justify-between">
@@ -369,16 +371,6 @@ export default function Dashboard() {
           </button>
         </div>
         <div className="flex items-center gap-3">
-          <RegionSelector selected={region} onChange={handleRegionChange} />
-          <TimeRangeSelector selected={timeFilter} onChange={setTimeFilter} />
-          <EnhancedLayerPanel activeLayers={activeLayers} onLayerToggle={handleLayerToggle} />
-          <MapControls
-            is3D={map3D}
-            onToggle3D={() => setMap3D(!map3D)}
-            onFullscreen={handleMapFullscreen}
-            onPinToTop={() => setMapPinned(!mapPinned)}
-            isPinned={mapPinned}
-          />
           <FullscreenToggle />
           <button
             onClick={() => setCommandPaletteOpen(true)}
@@ -387,8 +379,8 @@ export default function Dashboard() {
             <span>⌘K</span>
             <span className="hidden xl:inline">Search</span>
           </button>
-          <SearchBar signals={signals} />
-          <span className="text-[9px] text-text-dim font-mono hidden xl:inline">{signals.length} signals</span>
+          <SearchBar signals={filteredSignals} />
+          <span className="text-[9px] text-text-dim font-mono hidden xl:inline">{filteredSignals.length} / {signals.length} signals</span>
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-mono ${soundEnabled ? 'bg-accent-green/20 text-accent-green' : 'bg-elevated text-text-dim'}`}
@@ -413,7 +405,7 @@ export default function Dashboard() {
       {/* Desktop Layout — Custom Dashboard with drag-and-drop */}
       <div className="hidden lg:flex flex-1 overflow-hidden">
         <CustomDashboard
-          signals={signals}
+          signals={filteredSignals}
           markets={markets}
           earthquakes={earthquakes}
           conflicts={conflicts}
@@ -427,8 +419,8 @@ export default function Dashboard() {
 
       {/* Mobile Layout */}
       <main className="lg:hidden flex-1 overflow-hidden pb-16">
-        {mobileView === 'feed' && <SignalFeed signals={signals} loading={signalsLoading || signalsValidating} onSignalClick={handleSignalClick} />}
-        {mobileView === 'map' && <div className="h-full p-2"><WorldMap signals={signals} activeLayers={activeLayers} onLayerToggle={handleLayerToggle} earthquakes={earthquakes} /></div>}
+        {mobileView === 'feed' && <SignalFeed signals={filteredSignals} loading={signalsLoading || signalsValidating} onSignalClick={handleSignalClick} />}
+        {mobileView === 'map' && <div className="h-full p-2"><WorldMap signals={filteredSignals} activeLayers={activeLayers} onLayerToggle={handleLayerToggle} earthquakes={earthquakes} /></div>}
         {mobileView === 'markets' && (
           <div className="h-full overflow-y-auto p-2 space-y-2">
             <SituationBrief />
@@ -469,10 +461,6 @@ export default function Dashboard() {
         <StatsBar activeConflicts={ACTIVE_CONFLICTS.length} militaryAlerts={militaryCount} highSeverity={highCount} criticalSeverity={criticalCount} timeFilter={timeFilter} onTimeFilterChange={setTimeFilter} />
       </div>
 
-      {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
-
-      {/* Help Pin - Floating help button */}
       <HelpPin />
     </div>
   );
