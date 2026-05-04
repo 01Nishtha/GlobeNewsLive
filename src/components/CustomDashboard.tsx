@@ -1,5 +1,5 @@
 "use client";
-
+import TechGlobe3D from "./TechGlobe3D";
 import {
   useState,
   useEffect,
@@ -81,12 +81,21 @@ import {
 // Components
 import SignalFeed from "./SignalFeed";
 import WorldMap from "./WorldMap";
+import Globe3DView from "./Globe3DView";
+import MapToggleView from "./MapToggleView";
+import NKMissilePanel from "./NKMissilePanel";
+import ChatAnalystPanel from "./ChatAnalystPanel";
+import CountryIntelligenceIndex from "./CountryIntelligenceIndex";
+import CrossSourceSignals from "./CrossSourceSignals";
 import RiskDashboard from "./RiskDashboard";
 import SentimentMeter from "./SentimentMeter";
 import FlightRadar from "./FlightRadar";
 import MilitaryTracker from "./MilitaryTracker";
 import CyberFeed from "./CyberFeed";
 import TwitterFeed from "./TwitterFeed";
+import WorldFeed from "./WorldFeed";
+import PentagonPizzaIndex from "./PentagonPizzaIndex";
+import CountryInstabilityIndex from "./CountryInstabilityIndex";
 import HotspotStreams from "./HotspotStreams";
 import AttackTimeline from "./AttackTimeline";
 import AIInsights from "./AIInsights";
@@ -150,6 +159,8 @@ interface CustomDashboardProps {
   activeLayers: string[];
   onLayerToggle: (layer: string) => void;
   onSignalClick: (signal: Signal) => void;
+  isBookmarked?: (id: string) => boolean;
+  onBookmark?: (id: string) => void;
 }
 
 // ─── Layout Presets ───────────────────────────────────────────────────────────
@@ -167,7 +178,7 @@ const LAYOUT_PRESETS: Record<
   "intelligence-analyst": {
     label: "Intelligence Analyst",
     emoji: "🕵️",
-    desc: "Map + Videos + Risk + Timeline + Panels",
+    desc: "Map + Videos + Risk + Timeline + Flight Radar + Panels",
     widgets: [
       "signal-feed",
       "world-map",
@@ -176,6 +187,8 @@ const LAYOUT_PRESETS: Record<
       "sentiment-meter",
       "ai-insights",
       "attack-timeline",
+      "flight-radar",
+      "supply-chain",
     ],
     layout: [
       { i: "signal-feed", x: 0, y: 0, w: 1, h: 10, minW: 1, maxW: 1, minH: 6 },
@@ -220,6 +233,26 @@ const LAYOUT_PRESETS: Record<
         minW: 1,
         maxW: 1,
         minH: 3,
+      },
+      {
+        i: "flight-radar",
+        x: 1,
+        y: 16,
+        w: 1,
+        h: 6,
+        minW: 1,
+        maxW: 1,
+        minH: 4,
+      },
+      {
+        i: "supply-chain",
+        x: 0,
+        y: 22,
+        w: 1,
+        h: 6,
+        minW: 1,
+        maxW: 1,
+        minH: 4,
       },
     ],
   },
@@ -553,6 +586,8 @@ export default function CustomDashboard({
   activeLayers,
   onLayerToggle,
   onSignalClick,
+  isBookmarked,
+  onBookmark,
 }: CustomDashboardProps) {
   const [layout, setLayout] = useState<Layout[]>(
     LAYOUT_PRESETS["intelligence-analyst"].layout,
@@ -781,22 +816,27 @@ export default function CustomDashboard({
           <SignalFeed
             signals={signals}
             loading={signalsLoading}
-            onSignalClick={onSignalClick}
+            onSignalClick={onSignalClick} isBookmarked={isBookmarked} onBookmark={onBookmark}
           />
         );
       case "world-map":
-        return (
-          <WorldMap
-            signals={signals}
-            activeLayers={activeLayers}
-            onLayerToggle={onLayerToggle}
-            earthquakes={earthquakes}
-          />
-        );
+        return <MapToggleView signals={signals} activeLayers={activeLayers} onLayerToggle={onLayerToggle} earthquakes={earthquakes} />;
+      case "country-intelligence":
+        return <CountryIntelligenceIndex />;
+      case "cross-source-signals":
+        return <CrossSourceSignals />;
+      case "chat-analyst":
+        return <ChatAnalystPanel />;
+      case "nk-missiles":
+        return <NKMissilePanel />;
+      case "tech-globe":
+        return <TechGlobe3D />;
+      case "tech-globe": return <TechGlobe3D />; case "tech-globe": return <TechGlobe3D />; case "globe-3d":
+        return <Globe3DView signals={signals} />;
       case "risk-dashboard":
         return <RiskDashboard />;
       case "sentiment-meter":
-        return <SentimentMeter />;
+        return <SentimentMeter signals={signals} />;
       case "flight-radar":
         return <FlightRadar />;
       case "military-tracker":
