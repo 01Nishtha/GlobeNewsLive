@@ -24,6 +24,9 @@ export interface Signal {
   lat?: number;
   lon?: number;
   summary?: string;
+  region?: string;
+  iranRelevance?: number;
+  country?: string;
 }
 
 export interface MarketData {
@@ -65,6 +68,30 @@ export interface CountryRisk {
 }
 
 export type ThreatLevel = 'LOW' | 'GUARDED' | 'ELEVATED' | 'HIGH' | 'SEVERE';
+
+export interface MissileEvent {
+  id: string;
+  type: 'DRONE' | 'AIRSTRIKE' | 'ARTILLERY' | 'SRBM' | 'CRUISE' | 'MISSILE' | 'ROCKET' | 'INTERCEPTION' | 'ICBM' | 'MRBM' | 'MLRS';
+  source: 'ACLED' | 'GDELT' | 'SYNTHETIC';
+  origin: [number, number];
+  target: [number, number];
+  lat: number;
+  lon: number;
+  timestamp: string;
+  location: string;
+  label: string;
+  description: string;
+  severity: Severity;
+  region: string;
+  speed?: number | string;
+  altitude?: number | string;
+  warhead?: string;
+  status?: 'IN_FLIGHT' | 'IMPACTED' | 'INTERCEPTED' | 'UNKNOWN' | 'intercepted' | 'active';
+  targetName?: string;
+  country?: string;
+  confidence?: number;
+  fatalities?: number;
+}
 
 export interface DashboardState {
   threatLevel: ThreatLevel;
